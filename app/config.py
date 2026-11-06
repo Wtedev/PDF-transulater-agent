@@ -11,9 +11,11 @@ for _d in (UPLOAD_DIR, OUTPUT_DIR, COVER_DIR):
     _d.mkdir(parents=True, exist_ok=True)
 
 DATABASE_URL = os.getenv("DATABASE_URL", "").strip() or f"sqlite:///{DATA_DIR / 'books.db'}"
-# Railway gives postgres:// URLs; SQLAlchemy wants postgresql://
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+# Railway gives postgres:// or postgresql:// URLs; pin the driver to psycopg 3
+for _prefix in ("postgres://", "postgresql://"):
+    if DATABASE_URL.startswith(_prefix):
+        DATABASE_URL = "postgresql+psycopg://" + DATABASE_URL[len(_prefix):]
+        break
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 # MOCK_LLM=1 runs the whole pipeline without calling the API (for local testing).
