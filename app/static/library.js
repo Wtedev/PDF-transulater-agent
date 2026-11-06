@@ -46,7 +46,7 @@ function render() {
   const q = $("#search").value.trim().toLowerCase();
   const sort = $("#sort").value;
   let list = books.filter((b) => (filter === "all" || b.category === filter || (filter === "busy" && BUSY.includes(b.status)))
-    && (!q || b.title.toLowerCase().includes(q) || (b.author || "").toLowerCase().includes(q)));
+    && (!q || b.title.toLowerCase().includes(q) || (b.display_title || "").includes(q) || (b.author || "").toLowerCase().includes(q)));
   if (sort === "title") list.sort((a, b) => a.title.localeCompare(b.title, "ar"));
   else if (sort === "read") list.sort((a, b) => (b.last_read || "").localeCompare(a.last_read || ""));
 
@@ -61,7 +61,7 @@ function render() {
       ${coverHTML(b, readable ? `/read/${b.id}` : null)}
       ${busy ? `<div class="busy-info"><div>${esc(b.stage || "")}</div><div class="bar"><span style="width:${b.progress}%"></span></div></div>` : ""}
       <div class="meta-row">
-        <div class="meta"><h3>${esc(b.title)}</h3>
+        <div class="meta"><h3>${esc(b.display_title)}</h3>${b.display_title !== b.title ? `<div class="muted orig-title" dir="auto">${esc(b.title)}</div>` : ""}
           <div class="muted">${esc(b.author || b.format_label || "")}${b.read_percent > 0 ? ` · قرأت ${Math.round(b.read_percent)}%` : ""}</div></div>
         <button class="btn icon ghost menu-btn" aria-label="خيارات" onclick="openMenu(event, ${b.id})">
           <svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button>
@@ -72,7 +72,7 @@ function render() {
     .sort((a, b) => (b.last_read || "").localeCompare(a.last_read || "")).slice(0, 6);
   $("#continueSection").hidden = !reading.length;
   $("#continueRow").innerHTML = reading.map((b) => `<a class="continue-card" href="/read/${b.id}">
-      ${coverHTML(b)}<div style="flex:1;min-width:0"><h3>${esc(b.title)}</h3>
+      ${coverHTML(b)}<div style="flex:1;min-width:0"><h3>${esc(b.display_title)}</h3>
       <div class="muted" style="font-size:13px">${Math.round(b.read_percent)}% مقروء</div>
       <div class="bar"><span style="width:${b.read_percent}%"></span></div></div></a>`).join("");
 
@@ -108,6 +108,7 @@ function openMenu(ev, id) {
     ${b.has_pdf ? `<a href="/api/books/${id}/pdf">⬇️ تحميل PDF</a>` : ""}
     <button onclick="showDetails(${id})">ℹ️ التفاصيل والمسار</button>
     <button onclick="renameBook(${id})">✏️ تعديل الاسم</button>
+    ${["ready", "needs_review", "failed"].includes(b.status) ? `<button onclick="reprocessBook(${id})">♻️ إعادة المعالجة</button>` : ""}
     ${["failed", "no_credit"].includes(b.status) ? `<button onclick="retryBook(${id})">🔁 إعادة المحاولة</button>` : ""}
     ${BUSY.includes(b.status) ? "" : `<button class="danger" onclick="deleteBook(${id})">🗑️ حذف</button>`}`;
   document.body.appendChild(m);
@@ -119,16 +120,22 @@ document.addEventListener("click", closeMenu);
 
 async function renameBook(id) {
   const b = books.find((x) => x.id === id);
-  const title = prompt("اسم الكتاب", b.title);
-  if (!title || title === b.title) return;
-  await api(`/api/books/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title }) });
+  const title = prompt("اسم الكتاب بالعربي (يُستخدم اسماً لملف PDF)", b.display_title);
+  if (!title || title === b.display_title) return;
+  const body = /[\u0600-\u06FF]/.test(b.title) ? { title } : { title_ar: title };
+  await api(`/api/books/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   if (["ready", "needs_review"].includes(b.status)) await api(`/api/books/${id}/export`, { method: "POST" });
   toast("تم تعديل الاسم"); load();
 }
 async function deleteBook(id) {
   const b = books.find((x) => x.id === id);
-  if (!confirm(`حذف «${b.title}» نهائياً مع ملفاته؟`)) return;
+  if (!confirm(`حذف «${b.display_title}» نهائياً مع ملفاته؟`)) return;
   await api(`/api/books/${id}`, { method: "DELETE" }); toast("تم الحذف"); load();
+}
+async function reprocessBook(id) {
+  const b = books.find((x) => x.id === id);
+  if (!confirm(`إعادة استخراج وترجمة «${b.title}» من الملف الأصلي؟\n\n• بيصرف من الرصيد مرة ثانية\n• العلامات ونسبة القراءة الحالية بتنحذف`)) return;
+  await api(`/api/books/${id}/reprocess`, { method: "POST" }); toast("بدأت إعادة المعالجة"); load();
 }
 async function retryBook(id) { await api(`/api/books/${id}/retry`, { method: "POST" }); toast("أُعيد للطابور، سيكمل من حيث توقف"); load(); }
 

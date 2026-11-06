@@ -127,3 +127,4 @@ svg.i.big { width: 30px; height: 30px; color: var(--accent); }
 .badge.wait { background: var(--warn); color: #fff; }
 .mock-banner a { font-weight: 600; }
 @media (max-width: 600px) { .hide-sm { display: none; } }
+.orig-title { font-size: 12.5px; line-height: 1.4; }

@@ -26,6 +26,7 @@ body { font-family: 'Naskh', 'Amiri', 'DejaVu Sans', serif; font-size: 11pt; lin
 /* title page + contents */
 .title-page { page: front; text-align: center; padding-top: 45mm; page-break-after: always; }
 .title-page h1 { font-family: 'Amiri'; font-size: 24pt; margin: 0 0 6mm; }
+.tp-original { font-size: 11pt; color: #8a8174; letter-spacing: .5pt; margin-bottom: 5mm; }
 .tp-author { font-size: 13pt; color: #5c544a; margin-bottom: 40mm; }
 .tp-note { font-size: 8.5pt; color: #8a8174; line-height: 1.8; }
 .toc { page: front; page-break-after: always; }

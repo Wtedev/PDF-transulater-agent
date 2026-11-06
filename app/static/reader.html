@@ -20,6 +20,8 @@
 </header>
 
 <main id="page"><article id="book" class="book-body"></article></main>
+<button class="turn prev" id="turnPrev" aria-label="الصفحة السابقة"><svg class="i" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></button>
+<button class="turn next" id="turnNext" aria-label="الصفحة التالية"><svg class="i" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg></button>
 
 <footer class="rfoot" id="rfoot">
   <div class="fbar"><span id="fprog"></span></div>
@@ -40,6 +42,8 @@
 <aside class="panel" id="panel-settings" hidden>
   <div class="phead"><h2>إعدادات العرض</h2><button class="btn icon ghost close" aria-label="إغلاق"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div class="settings">
+    <div class="srow col"><label>طريقة العرض</label>
+      <div class="opts small" id="layoutOpts"><button data-v="pages">صفحات</button><button data-v="scroll">تمرير</button></div></div>
     <div class="srow"><label>حجم الخط</label>
       <div class="stepper"><button data-step="size" data-d="-1" aria-label="تصغير">ا-</button><output id="sizeOut">20</output><button data-step="size" data-d="1" aria-label="تكبير">ا+</button></div></div>
     <div class="srow col"><label>نوع الخط</label><div class="opts" id="fontOpts"></div></div>

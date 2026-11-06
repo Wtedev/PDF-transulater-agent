@@ -13,7 +13,7 @@ from sqlalchemy import func
 
 from . import config, security, worker
 from .db import ApiKey, Book, Bookmark, Chapter, Paragraph, ReadingState, SessionLocal, User, init_db
-from .export.covers import STYLES, cover_html, cover_spec
+from .export.covers import STYLES, cover_html, cover_spec, display_title
 from .providers import PROVIDERS, SHARED_TOKENS_PER_USER, test_key
 from .pipeline.profiles import PROFILES
 from .pipeline.router import FORMAT_LABELS
@@ -224,7 +224,7 @@ def delete_key(key_id: int, uid: int = Depends(current_user)):
 def _book_json(b: Book, extra: dict | None = None) -> dict:
     spec = cover_spec(b)
     percent = (extra or {}).get("read_percent")
-    d = {"id": b.id, "title": b.title, "author": b.author, "category": b.category,
+    d = {"id": b.id, "title": b.title, "display_title": display_title(b), "author": b.author, "category": b.category,
          "category_label": PROFILES.get(b.category, {}).get("label", ""),
          "format": b.file_format, "format_label": FORMAT_LABELS.get(b.file_format, ""),
          "source_lang": b.source_lang, "status": b.status, "stage": b.stage,
@@ -332,6 +332,8 @@ async def rename_book(book_id: int, request: Request, uid: int = Depends(current
         b = _get_book(s, book_id, uid)
         if data.get("title", "").strip():
             b.title = data["title"].strip()
+        if data.get("title_ar", "").strip():
+            b.glossary = {**(b.glossary or {}), "title_ar": data["title_ar"].strip()}
         if "author" in data:
             b.author = data["author"].strip()
         s.commit()
@@ -366,6 +368,24 @@ def retry_book(book_id: int, uid: int = Depends(current_user)):
         if b.status not in ("failed", "no_credit"):
             raise HTTPException(409, "الكتاب ليس متوقفاً")
         b.status, b.error, b.stage = "queued", "", "في الانتظار"
+        s.commit()
+    worker.wake()
+    return {"ok": True}
+
+
+@app.post("/api/books/{book_id}/reprocess")
+def reprocess_book(book_id: int, uid: int = Depends(current_user)):
+    """Extract and translate the book again from its original file (uses credit again)."""
+    with SessionLocal() as s:
+        b = _get_book(s, book_id, uid)
+        if b.status in worker.IN_PROGRESS or b.status == "queued":
+            raise HTTPException(409, "الكتاب قيد المعالجة حالياً")
+        for ch in list(b.chapters):
+            s.delete(ch)
+        s.query(Bookmark).filter(Bookmark.book_id == book_id).delete()
+        s.query(ReadingState).filter(ReadingState.book_id == book_id).delete()
+        b.glossary, b.router_info, b.pdf_file, b.key_used = {}, {}, "", ""
+        b.status, b.stage, b.progress, b.error, b.flagged_count = "queued", "في الانتظار — إعادة معالجة", 0, "", 0
         s.commit()
     worker.wake()
     return {"ok": True}

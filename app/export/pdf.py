@@ -9,7 +9,7 @@ from pathlib import Path
 
 from .. import config
 from ..pipeline.profiles import PROFILES
-from .covers import cover_html, cover_spec
+from .covers import cover_html, cover_spec, display_title
 
 TEMPLATE_CSS = (Path(__file__).parent / "book.css").read_text(encoding="utf-8")
 COVER_CSS = (config.BASE_DIR / "static" / "covers.css").read_text(encoding="utf-8")
@@ -42,7 +42,8 @@ def _font_faces() -> str:
 
 def build_html(book) -> str:
     accent = cover_spec(book)["accent"]
-    title, author = _esc(book.title), _esc(book.author)
+    title, author = _esc(display_title(book)), _esc(book.author)
+    original = _esc(book.title) if display_title(book) != book.title else ""
     category = PROFILES.get(book.category, PROFILES["general"])["label"]
 
     if book.cover_file:
@@ -76,7 +77,7 @@ def build_html(book) -> str:
         body.append("\n".join(parts))
 
     title_page = f"""<section class="title-page">
-        <h1>{title}</h1><div class="tp-author">{author}</div>
+        <h1>{title}</h1>{f'<div class="tp-original" dir="auto">{original}</div>' if original else ""}<div class="tp-author">{author}</div>
         <div class="tp-note">ترجمة آلية مراجعة بوكلاء الذكاء الاصطناعي<br>ترجمة · تدقيق · تحرير · مراجعة اتساق</div>
       </section>"""
     contents = f'<section class="toc"><h1>المحتويات</h1><ol>{"".join(toc)}</ol></section>' if len(toc) > 1 else ""
@@ -87,11 +88,26 @@ def build_html(book) -> str:
       </head><body><div class="running-title">{title}</div>{cover}{title_page}{contents}{''.join(body)}</body></html>"""
 
 
+def ensure_title_ar(book):
+    """Books translated before titles were translated get their Arabic title now."""
+    import re as _re
+    if _re.search(r"[\u0600-\u06FF]", book.title or "") or (book.glossary or {}).get("title_ar"):
+        return
+    try:
+        from ..pipeline.agents import translate_title
+        ar = translate_title(book.title)
+        if ar:
+            book.glossary = {**(book.glossary or {}), "title_ar": ar}
+    except Exception:
+        pass   # keep the original title rather than failing the export
+
+
 def export_pdf(book) -> str:
     from weasyprint import HTML
+    ensure_title_ar(book)
     out_dir = config.OUTPUT_DIR / str(book.id)
     out_dir.mkdir(parents=True, exist_ok=True)
-    name = safe_filename(book.title, book.author)
+    name = safe_filename(display_title(book), book.author)
     for old in out_dir.glob("*.pdf"):
         old.unlink()
     HTML(string=build_html(book), base_url=str(config.BASE_DIR)).write_pdf(out_dir / name)

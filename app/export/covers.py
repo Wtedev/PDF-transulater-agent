@@ -47,6 +47,14 @@ def get_cover_style(user_id: int | None = None) -> str:
     return "calligraphic"
 
 
+def display_title(book) -> str:
+    """Arabic title when we have one, otherwise what the user typed."""
+    title = (book.title or "").strip()
+    if _AR.search(title):
+        return title
+    return ((book.glossary or {}).get("title_ar") or "").strip() or title
+
+
 def _seed(title: str) -> int:
     return int(hashlib.md5(title.encode("utf-8")).hexdigest(), 16)
 

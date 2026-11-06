@@ -109,3 +109,19 @@ body.reader[data-rtheme="dark"], body.reader[data-rtheme="black"] { --surface: #
   .book-body.side .pair .orig { background: color-mix(in srgb, var(--r-ink) 5%, transparent); padding: .5em .8em; margin-bottom: .6em; }
 }
 @media print { .rbar, .rfoot, .panel, .pop { display: none !important; } #page { padding: 0; } }
+
+/* ---------- page mode: CSS columns, one column = one page, turned horizontally ---------- */
+body.paged { overflow: hidden; height: 100vh; height: 100dvh; }
+body.paged #page { position: fixed; top: 62px; bottom: 54px; left: 0; right: 0; padding: 0; overflow: hidden; }
+body.paged .book-body { max-width: none; margin: 0; height: 100%; column-fill: auto; }
+body.paged .chapter { break-before: column; margin-bottom: 0; }
+body.paged .chapter + .chapter { padding-top: 0; border-top: 0; }
+body.paged .para { break-inside: auto; orphans: 2; widows: 2; }
+body.paged .ch-title { margin-top: 1.2em; }
+.turn { display: none; position: fixed; top: 50%; transform: translateY(-50%); z-index: 15; border: 0; background: none;
+        color: var(--r-ink-2); opacity: .35; padding: 18px 6px; cursor: pointer; }
+.turn:hover { opacity: .9; }
+.turn.prev { right: 4px; } .turn.next { left: 4px; }
+body.paged .turn { display: block; }
+body.paged .rbar.hide, body.paged .rfoot.hide { transform: none; }
+@media (hover: none) { .turn { display: none !important; } }

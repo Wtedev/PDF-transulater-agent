@@ -58,12 +58,13 @@ def _pdf_page_blocks(page, body_size: float, page_no: int) -> list[dict]:
     for block in data["blocks"]:
         if block.get("type") != 0:
             continue
-        lines, sizes, bold_chars, chars = [], [], 0, 0
+        lines, sizes, bold_chars, chars, boxes = [], [], 0, 0, []
         for line in block["lines"]:
             spans = [s for s in line["spans"] if s["text"].strip()]
             if not spans:
                 continue
             lines.append("".join(s["text"] for s in line["spans"]).strip())
+            boxes.append(line["bbox"])
             for s in spans:
                 n = len(s["text"].strip())
                 sizes.append((s["size"], n))
@@ -85,8 +86,50 @@ def _pdf_page_blocks(page, body_size: float, page_no: int) -> list[dict]:
                 kind = "h1"
             elif size >= body_size * 1.15 or (bold_chars == chars and len(text) < 90 and not SENTENCE_END.search(text)):
                 kind = "h2"
-        out.append({"kind": kind, "text": text, "page": page_no, "conf": 1.0,
+        out.append({"kind": kind, "text": text, "page": page_no, "conf": 1.0, "size": size,
+                    "first": (boxes[0][0], boxes[0][2]), "last": (boxes[-1][0], boxes[-1][2]),
+                    "x0": block["bbox"][0], "x1": block["bbox"][2],
                     "y0": block["bbox"][1], "y1": block["bbox"][3], "h": page.rect.height})
+    return _merge_lines(out)
+
+
+_RTL = re.compile(r"[\u0590-\u08FF]")
+
+
+def _merge_lines(blocks: list[dict]) -> list[dict]:
+    """Many PDFs store every line (or every few lines) as its own block. Glue a
+    block to the previous one only when the paragraph clearly continues:
+    same font size, a normal line gap, the previous block's last line runs to
+    the full column width, and the next block's first line is not indented."""
+    body = [b for b in blocks if b["kind"] == "p"]
+    if not body:
+        return blocks
+    left = min(b["x0"] for b in body)
+    right = max(b["x1"] for b in body)
+    out: list[dict] = []
+    for b in blocks:
+        prev = out[-1] if out else None
+        if prev and prev["kind"] == "p" and b["kind"] == "p" and abs(prev["size"] - b["size"]) < 0.6:
+            size = b["size"]
+            gap = b["y0"] - prev["y1"]
+            rtl = bool(_RTL.search(prev["text"][:80]))
+            px0, px1 = prev["last"]
+            bx0, bx1 = b["first"]
+            if rtl:
+                prev_full = px0 <= left + 2 * size
+                indented = bx1 < right - 1.2 * size
+            else:
+                prev_full = px1 >= right - 2 * size
+                indented = bx0 > left + 1.2 * size
+            if -2 <= gap < 0.9 * size and prev_full and not indented:
+                if prev["text"].endswith("-") and b["text"][:1].islower():
+                    prev["text"] = prev["text"][:-1] + b["text"]
+                else:
+                    prev["text"] = prev["text"] + " " + b["text"]
+                prev["last"] = b["last"]
+                prev["y1"] = b["y1"]
+                continue
+        out.append(dict(b))
     return out
 
 

@@ -200,3 +200,12 @@ def consistency(chapter_paras: list[dict], ctx: str) -> dict[int, str]:
 
 def context_for(book_glossary: dict, profile_key: str, src_lang: str) -> str:
     return _context_block(book_glossary, profile_key, src_lang)
+
+
+def translate_title(title: str) -> str:
+    """Arabic rendering of a book title (used when the glossary has none)."""
+    result = llm.call_json(agent="router", model=config.MODEL_ROUTER,
+                           instructions="Translate this book title into natural, concise Arabic. "
+                                        "If an established Arabic title exists, use it. Return JSON only: {\"title_ar\": \"...\"}",
+                           user=title, mock=lambda: {"title_ar": title}, max_tokens=200)
+    return str(result.get("title_ar", "")).strip()
