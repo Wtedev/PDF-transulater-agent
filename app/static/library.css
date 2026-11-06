@@ -123,3 +123,7 @@ svg.i.big { width: 30px; height: 30px; color: var(--accent); }
 .style-switch { display: flex; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
 .style-switch button { border: 0; background: none; padding: 6px 14px; border-radius: 999px; cursor: pointer; font-size: 14px; }
 .style-switch button.on { background: var(--ink); color: var(--bg); }
+.top-actions { display: flex; align-items: center; gap: 6px; }
+.badge.wait { background: var(--warn); color: #fff; }
+.mock-banner a { font-weight: 600; }
+@media (max-width: 600px) { .hide-sm { display: none; } }

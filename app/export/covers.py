@@ -11,10 +11,7 @@ minimal      — monochrome on near-black, a small centred bilingual lockup
 the PDF renders it with the same proportions (sizes are in % of cover width).
 """
 import hashlib
-import json
 import re
-
-from .. import config
 
 CALLIGRAPHIC = [  # (ground, accent)
     ("#0B1E28", "#4A8BA8"),  # deep sea / teal
@@ -38,24 +35,16 @@ CATEGORY_EN = {"literary": "Literature", "scientific": "Science", "technical": "
                "children": "Children", "religious": "Religion", "poetry": "Poetry", "legal": "Law & Finance",
                "self_help": "Leadership & Growth", "general": "Book"}
 _AR = re.compile(r"[؀-ۿ]")
-SETTINGS_FILE = config.DATA_DIR / "settings.json"
 
 
-def get_cover_style() -> str:
-    try:
-        return json.loads(SETTINGS_FILE.read_text()).get("cover_style", "calligraphic")
-    except Exception:
-        return "calligraphic"
-
-
-def set_cover_style(style: str):
-    data = {}
-    try:
-        data = json.loads(SETTINGS_FILE.read_text())
-    except Exception:
-        pass
-    data["cover_style"] = style
-    SETTINGS_FILE.write_text(json.dumps(data))
+def get_cover_style(user_id: int | None = None) -> str:
+    if user_id:
+        from ..db import SessionLocal, User
+        with SessionLocal() as s:
+            u = s.get(User, user_id)
+            if u and u.cover_style in STYLES:
+                return u.cover_style
+    return "calligraphic"
 
 
 def _seed(title: str) -> int:
@@ -71,7 +60,7 @@ def _size(text: str, steps) -> float:
 
 
 def cover_spec(book, style: str | None = None) -> dict:
-    style = style or get_cover_style()
+    style = style or get_cover_style(getattr(book, "user_id", None))
     title = (book.title or "").strip()
     title_ar = ((book.glossary or {}).get("title_ar") or "").strip()
     if _AR.search(title):

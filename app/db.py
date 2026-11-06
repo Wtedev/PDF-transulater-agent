@@ -22,9 +22,42 @@ def now():
     return datetime.now(timezone.utc)
 
 
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True)
+    email = Column(String(320), unique=True, nullable=False, index=True)
+    name = Column(String(200), default="")
+    password_hash = Column(String(300), nullable=False)
+    is_admin = Column(Boolean, default=False)
+    key_order = Column(String(20), default="shared_first")   # shared_first | mine_first | mine_only
+    shared_tokens = Column(Integer, default=0)               # tokens spent on the shared key
+    cover_style = Column(String(20), default="calligraphic")
+    created_at = Column(DateTime(timezone=True), default=now)
+
+
+class ApiKey(Base):
+    """A user's own provider key, encrypted at rest."""
+    __tablename__ = "api_keys"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    provider = Column(String(20), nullable=False)            # anthropic | openai | openrouter
+    label = Column(String(100), default="")
+    secret = Column(Text, nullable=False)                    # Fernet-encrypted key
+    last4 = Column(String(8), default="")
+    model_main = Column(String(120), default="")             # empty = provider default
+    model_fast = Column(String(120), default="")
+    status = Column(String(20), default="ok")                # ok | no_credit | invalid
+    status_note = Column(Text, default="")
+    position = Column(Integer, default=0)
+    tokens_used = Column(Integer, default=0)
+    created_at = Column(DateTime(timezone=True), default=now)
+
+
 class Book(Base):
     __tablename__ = "books"
     id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=True)
+    key_used = Column(String(200), default="")               # which key(s) did the work, for display
     title = Column(String(500), nullable=False)          # the name the user typed at upload
     author = Column(String(300), default="")
     source_lang = Column(String(20), default="auto")
@@ -95,5 +128,21 @@ class ReadingState(Base):
     updated_at = Column(DateTime(timezone=True), default=now, onupdate=now)
 
 
+def _migrate():
+    """create_all() never adds columns to existing tables; add the new ones here."""
+    from sqlalchemy import inspect, text
+    insp = inspect(engine)
+    wanted = {"books": [("user_id", "INTEGER"), ("key_used", "VARCHAR(200) DEFAULT ''")]}
+    with engine.begin() as conn:
+        for table, cols in wanted.items():
+            if not insp.has_table(table):
+                continue
+            have = {c["name"] for c in insp.get_columns(table)}
+            for name, ddl in cols:
+                if name not in have:
+                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}"))
+
+
 def init_db():
     Base.metadata.create_all(engine)
+    _migrate()

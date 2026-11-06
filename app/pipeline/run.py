@@ -4,6 +4,7 @@ Stages are resumable: extracted paragraphs, the glossary and every finished
 segment are saved, so a restart (deploy, crash, "retry" button) continues
 where it stopped instead of paying for the same work twice.
 """
+import contextvars
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -14,6 +15,7 @@ from sqlalchemy import func
 from .. import config
 from ..db import Book, Chapter, Paragraph, SessionLocal
 from ..export.pdf import export_pdf
+from ..providers import KeyChain, NoCreditLeft, current_chain
 from . import agents, extract, router
 
 log = logging.getLogger("pipeline")
@@ -108,6 +110,8 @@ def _with_retries(fn, what: str, attempts: int = 3):
     for i in range(attempts):
         try:
             return fn()
+        except NoCreditLeft:
+            raise
         except Exception as e:
             if i == attempts - 1:
                 raise
@@ -176,6 +180,8 @@ def process_book(book_id: int):
             return
         has_paragraphs = s.query(func.count(Paragraph.id)).join(Chapter).filter(Chapter.book_id == book_id).scalar()
 
+    chain = KeyChain.for_user(book.user_id)
+    token = current_chain.set(chain)
     try:
         _update(book_id, status="analyzing", error="", stage="تحليل الملف وتحديد المسار", progress=1)
         if not has_paragraphs:
@@ -214,7 +220,8 @@ def process_book(book_id: int):
         _update(book_id, status="translating", stage="الترجمة والتدقيق", progress=20)
         totals = {"all": all_chars, "done": done_chars}
         with ThreadPoolExecutor(max_workers=config.CHAPTER_WORKERS) as pool:
-            futures = [pool.submit(_translate_chapter, book_id, cid, ctx, profile, totals) for cid in chapter_ids]
+            futures = [pool.submit(contextvars.copy_context().run, _translate_chapter, book_id, cid, ctx, profile, totals)
+                       for cid in chapter_ids]
             for f in futures:
                 f.result()
 
@@ -230,8 +237,20 @@ def process_book(book_id: int):
             book.stage = f"جاهز — {flagged} فقرة تحتاج مراجعة" if flagged else "جاهز"
             book.progress = 100
             s.commit()
+    except NoCreditLeft:
+        _update(book_id, status="no_credit", error="",
+                stage="متوقف: انتهى رصيد المفاتيح المتاحة — أضف مفتاحك من صفحة المفاتيح وسيكمل من حيث توقف")
     except extract.ProtectedFileError as e:
         _update(book_id, status="failed", error=str(e), stage="فشل")
     except Exception as e:
         log.exception("book %s failed", book_id)
         _update(book_id, status="failed", error=f"{type(e).__name__}: {e}"[:2000], stage="فشل — يمكن إعادة المحاولة")
+    finally:
+        if chain.used:
+            with SessionLocal() as s:
+                b = s.get(Book, book_id)
+                if b:
+                    prev = [x for x in (b.key_used or "").split(" ← ") if x]
+                    b.key_used = " ← ".join(dict.fromkeys(prev + chain.used))[:200]
+                    s.commit()
+        current_chain.reset(token)

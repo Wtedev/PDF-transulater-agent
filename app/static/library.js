@@ -2,13 +2,14 @@ const $ = (s, el = document) => el.querySelector(s);
 const esc = (t) => (t ?? "").toString().replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const BUSY = ["queued", "analyzing", "translating", "exporting"];
 const STATUS = { queued: "في الانتظار", analyzing: "تحليل", translating: "ترجمة", exporting: "إخراج",
-                 ready: "جاهز", needs_review: "يحتاج مراجعة", failed: "فشل" };
+                 ready: "جاهز", needs_review: "يحتاج مراجعة", failed: "فشل", no_credit: "بانتظار رصيد" };
 let books = [], categories = [], filter = "all", pollTimer = null;
 
 function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 2600); }
 
 async function api(url, opts = {}) {
   const r = await fetch(url, opts);
+  if (r.status === 401) { location.href = "/login"; throw new Error("سجّل الدخول"); }
   if (!r.ok) { let d = "حدث خطأ"; try { d = (await r.json()).detail || d; } catch {} throw new Error(d); }
   return r.json();
 }
@@ -28,7 +29,7 @@ function renderStyleSwitch() {
 async function setCoverStyle(key) {
   if (key === coverStyle) return;
   coverStyle = key; renderStyleSwitch();
-  await api("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cover_style: key }) });
+  await api("/api/me", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cover_style: key }) });
   await load();
   toast("تم تغيير نمط الأغلفة — الكتب الجديدة تُصدَّر بهذا النمط");
 }
@@ -37,6 +38,7 @@ function badge(b) {
   if (b.status === "ready") return "";
   if (b.status === "needs_review") return `<span class="badge review" title="${b.flagged} فقرة منخفضة الثقة">يحتاج مراجعة</span>`;
   if (b.status === "failed") return `<span class="badge failed">فشل</span>`;
+  if (b.status === "no_credit") return `<span class="badge wait">بانتظار رصيد</span>`;
   return `<span class="badge">${STATUS[b.status] || b.status}</span>`;
 }
 
@@ -86,6 +88,9 @@ function setFilter(k) { filter = k; render(); }
 async function load() {
   books = await api("/api/books");
   render();
+  const waiting = books.filter((b) => b.status === "no_credit").length;
+  $("#creditBanner").hidden = !waiting;
+  $("#creditBanner").innerHTML = waiting ? `${waiting} كتاب متوقف لأن رصيد المفاتيح انتهى. <a href="/keys">أضف مفتاحك</a> وسيكمل تلقائياً من حيث توقف.` : "";
   clearTimeout(pollTimer);
   if (books.some((b) => BUSY.includes(b.status))) pollTimer = setTimeout(load, 4000);
 }
@@ -103,7 +108,7 @@ function openMenu(ev, id) {
     ${b.has_pdf ? `<a href="/api/books/${id}/pdf">⬇️ تحميل PDF</a>` : ""}
     <button onclick="showDetails(${id})">ℹ️ التفاصيل والمسار</button>
     <button onclick="renameBook(${id})">✏️ تعديل الاسم</button>
-    ${b.status === "failed" ? `<button onclick="retryBook(${id})">🔁 إعادة المحاولة</button>` : ""}
+    ${["failed", "no_credit"].includes(b.status) ? `<button onclick="retryBook(${id})">🔁 إعادة المحاولة</button>` : ""}
     ${BUSY.includes(b.status) ? "" : `<button class="danger" onclick="deleteBook(${id})">🗑️ حذف</button>`}`;
   document.body.appendChild(m);
   const r = ev.currentTarget.getBoundingClientRect();
@@ -138,6 +143,7 @@ async function showDetails(id) {
       <dt>نوع المحتوى</dt><dd>${esc(b.category_label || "—")}${cls.confidence ? ` (ثقة ${Math.round(cls.confidence * 100)}%)` : ""}</dd>
       <dt>لغة الكتاب</dt><dd>${esc(b.source_lang)}</dd>
       <dt>قاموس المصطلحات</dt><dd>${b.glossary_terms} مصطلح</dd>
+      ${b.key_used ? `<dt>المفتاح المستخدم</dt><dd>${esc(b.key_used)}</dd>` : ""}
       ${ri.handwritten ? `<dt>ملاحظة</dt><dd>مخطوط بخط اليد — يحتاج مراجعة بشرية</dd>` : ""}
       ${b.flagged ? `<dt>تحتاج مراجعة</dt><dd>${b.flagged} فقرة</dd>` : ""}
     </dl>${b.error ? `<div class="error-box">${esc(b.error)}</div>` : ""}`;
@@ -179,6 +185,7 @@ $("#uploadForm").addEventListener("submit", (e) => {
   xhr.send(fd);
 });
 
+$("#logout").onclick = async () => { await fetch("/api/auth/logout", { method: "POST" }); location.href = "/login"; };
 $("#search").oninput = render;
 $("#sort").onchange = render;
 

@@ -27,13 +27,14 @@ def _esc(t: str) -> str:
 
 def _font_faces() -> str:
     faces = []
-    for family, file, weight in (("Naskh", "NotoNaskhArabic.ttf", "400 700"),
+    for family, file, weight in (("Naskh", "NotoNaskhArabic.ttf", "400"), ("Naskh", "NotoNaskhArabic.ttf", "700"),
                                  ("Amiri", "Amiri-Regular.ttf", "400"),
                                  ("Amiri", "Amiri-Bold.ttf", "700"),
                                  ("Aref Ruqaa", "ArefRuqaa-Bold.ttf", "700"),
-                                 ("Reem Kufi", "ReemKufi.ttf", "400 700"),
+                                 ("Reem Kufi", "ReemKufi.ttf", "600"),
                                  ("IBM Plex Sans Arabic", "IBMPlexSansArabic-Regular.ttf", "400"),
-                                 ("IBM Plex Sans Arabic", "IBMPlexSansArabic-Bold.ttf", "600 700")):
+                                 ("IBM Plex Sans Arabic", "IBMPlexSansArabic-Bold.ttf", "600"),
+                                 ("IBM Plex Sans Arabic", "IBMPlexSansArabic-Bold.ttf", "700")):
         path = (config.FONT_DIR / file).resolve()
         faces.append(f"@font-face{{font-family:'{family}';src:url('file://{path}');font-weight:{weight};}}")
     return "\n".join(faces)

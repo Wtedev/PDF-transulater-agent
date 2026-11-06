@@ -19,7 +19,7 @@ for _prefix in ("postgres://", "postgresql://"):
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 # MOCK_LLM=1 runs the whole pipeline without calling the API (for local testing).
-MOCK_LLM = os.getenv("MOCK_LLM", "0" if ANTHROPIC_API_KEY else "1") == "1"
+MOCK_LLM = os.getenv("MOCK_LLM", "0") == "1"
 
 # Each agent can use a different model. The reviewer defaults to a different
 # model than the translator so it does not wave through its own mistakes.
@@ -37,7 +37,5 @@ MAX_RETRANSLATIONS = int(os.getenv("MAX_RETRANSLATIONS", "2"))
 CHAPTER_WORKERS = int(os.getenv("CHAPTER_WORKERS", "3"))
 OCR_MIN_CONFIDENCE = float(os.getenv("OCR_MIN_CONFIDENCE", "0.75"))
 
-# Optional single password protecting the whole site (HTTP Basic auth).
-APP_PASSWORD = os.getenv("APP_PASSWORD", "")
 
 FONT_DIR = BASE_DIR / "fonts"

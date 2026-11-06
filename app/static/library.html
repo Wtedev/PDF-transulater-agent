@@ -16,12 +16,17 @@
     <span class="logo" aria-hidden="true">س</span>
     <div><h1>مكتبتي المترجمة</h1><p class="muted" id="count">—</p></div>
   </div>
+  <div class="top-actions">
+  <a class="btn ghost" href="/keys" title="مفاتيح API"><svg class="i" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3M15 8l2 2"/></svg><span class="hide-sm">مفاتيحي</span></a>
+  <button class="btn ghost" id="logout" title="تسجيل الخروج"><svg class="i" viewBox="0 0 24 24"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/></svg></button>
   <button class="btn primary" id="openUpload">
     <svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>ترجمة كتاب جديد
   </button>
+  </div>
 </header>
 
 <main>
+  <div class="mock-banner" id="creditBanner" hidden></div>
   <div class="mock-banner" id="mockBanner" hidden>وضع الاختبار مفعّل: الترجمة تجريبية بدون استدعاء الذكاء الاصطناعي. أضف ANTHROPIC_API_KEY للتشغيل الفعلي.</div>
 
   <section id="continueSection" hidden>

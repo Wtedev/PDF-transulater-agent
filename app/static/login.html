@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>الدخول — مكتبتي المترجمة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Aref+Ruqaa:wght@700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/static/common.css">
+<style>
+  body { min-height: 100vh; display: grid; grid-template-columns: 1.1fr 1fr; }
+  .art { background: #0B1E28; color: #EDE6DA; position: relative; overflow: hidden; display: flex; flex-direction: column;
+         justify-content: space-between; padding: 40px; }
+  .art .tag { font-size: 13px; opacity: .7; letter-spacing: .08em; }
+  .art h1 { font-family: 'Aref Ruqaa', serif; color: #4A8BA8; font-size: clamp(56px, 8vw, 110px); line-height: 1.3; margin: 0; }
+  .art p { max-width: 380px; opacity: .8; margin: 8px 0 0; }
+  .art .steps { display: flex; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+  .art .steps span { border: 1px solid rgba(237,230,218,.25); border-radius: 999px; padding: 4px 12px; }
+  .panel-wrap { display: grid; place-items: center; padding: 32px 20px; }
+  .card { width: min(400px, 100%); }
+  .card h2 { font-family: var(--display); font-size: 30px; margin: 0 0 6px; }
+  .tabs { display: flex; background: var(--surface-2); border-radius: 999px; padding: 4px; margin: 22px 0; }
+  .tabs button { flex: 1; border: 0; background: none; padding: 9px; border-radius: 999px; cursor: pointer; font-weight: 500; }
+  .tabs button.on { background: var(--surface); box-shadow: var(--shadow); }
+  form { display: flex; flex-direction: column; gap: 14px; }
+  label { display: flex; flex-direction: column; gap: 5px; font-size: 14px; font-weight: 500; }
+  input { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 11px 12px; }
+  input:focus { outline: 2px solid color-mix(in srgb, var(--accent) 40%, transparent); border-color: var(--accent); }
+  .err { color: var(--bad); font-size: 14px; margin: 0; }
+  .btn.primary { justify-content: center; padding: 12px; }
+  @media (max-width: 800px) { body { grid-template-columns: 1fr; } .art { min-height: 260px; padding: 28px 20px; } .art .steps { display: none; } }
+</style>
+</head>
+<body>
+<section class="art">
+  <div class="tag" dir="ltr">AR · TRANSLATION LIBRARY</div>
+  <div>
+    <h1>مكتبتي</h1>
+    <p>ارفع كتابك بأي صيغة، ويترجمه فريق من وكلاء الذكاء الاصطناعي، ثم اقرأه بالعربية بالشكل اللي يريحك.</p>
+  </div>
+  <div class="steps"><span>ترجمة</span><span>تدقيق</span><span>تحرير</span><span>اتساق</span><span>PDF</span></div>
+</section>
+<section class="panel-wrap">
+  <div class="card">
+    <h2 id="heading">أهلاً بعودتك</h2>
+    <p class="muted" id="sub">سجّل الدخول للوصول لمكتبتك.</p>
+    <div class="tabs" role="tablist">
+      <button class="on" data-mode="login" role="tab">تسجيل الدخول</button>
+      <button data-mode="register" role="tab" id="regTab">حساب جديد</button>
+    </div>
+    <form id="form">
+      <label id="nameRow" hidden>الاسم<input name="name" autocomplete="name"></label>
+      <label>البريد الإلكتروني<input name="email" type="email" required autocomplete="email" dir="ltr"></label>
+      <label>كلمة المرور<input name="password" type="password" required minlength="8" autocomplete="current-password" dir="ltr"></label>
+      <label id="inviteRow" hidden>رمز الدعوة<input name="invite" dir="ltr"></label>
+      <p class="err" id="err" hidden></p>
+      <button class="btn primary" id="submit">دخول</button>
+    </form>
+  </div>
+</section>
+<script>
+let mode = "login", signup = "open";
+const $ = (s) => document.querySelector(s);
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("on", b.dataset.mode === m));
+  $("#nameRow").hidden = m !== "register";
+  $("#inviteRow").hidden = !(m === "register" && signup === "invite");
+  $("#heading").textContent = m === "login" ? "أهلاً بعودتك" : "أنشئ مكتبتك";
+  $("#sub").textContent = m === "login" ? "سجّل الدخول للوصول لمكتبتك." : "حساب واحد، مكتبة خاصة فيك، ومفاتيحك محفوظة مشفّرة.";
+  $("#submit").textContent = m === "login" ? "دخول" : "إنشاء الحساب";
+  $('input[name=password]').autocomplete = m === "login" ? "current-password" : "new-password";
+  $("#err").hidden = true;
+}
+document.querySelectorAll(".tabs button").forEach((b) => b.onclick = () => setMode(b.dataset.mode));
+$("#form").onsubmit = async (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target));
+  $("#submit").disabled = true;
+  try {
+    const r = await fetch(`/api/auth/${mode}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail || "حدث خطأ");
+    location.href = mode === "register" ? "/keys?welcome=1" : "/";
+  } catch (err) { $("#err").textContent = err.message; $("#err").hidden = false; }
+  finally { $("#submit").disabled = false; }
+};
+fetch("/api/auth/me").then((r) => r.json()).then((j) => {
+  if (j.user) location.href = "/";
+  signup = j.signup;
+  if (signup === "closed") $("#regTab").hidden = true;
+});
+</script>
+</body>
+</html>

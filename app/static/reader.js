@@ -18,6 +18,7 @@ let srcRtl = false;
 function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 2200); }
 async function api(url, opts = {}) {
   const r = await fetch(url, opts);
+  if (r.status === 401) { location.href = "/login"; throw new Error("سجّل الدخول"); }
   if (!r.ok) { let d = "حدث خطأ"; try { d = (await r.json()).detail || d; } catch {} throw new Error(d); }
   return r.json();
 }

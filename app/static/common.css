@@ -38,3 +38,4 @@ svg.i { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-widt
          padding: 10px 18px; border-radius: 999px; font-size: 14px; z-index: 100; opacity: 0; transition: opacity .2s; pointer-events: none; }
 .toast.show { opacity: 1; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+[hidden] { display: none !important; }

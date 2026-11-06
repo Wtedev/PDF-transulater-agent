@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>مفاتيح API — مكتبتي المترجمة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/static/common.css">
+<style>
+  .top { display: flex; align-items: center; gap: 12px; padding: 18px clamp(16px, 4vw, 48px); border-bottom: 1px solid var(--line); background: var(--surface); }
+  .top h1 { font-family: var(--display); font-size: 24px; margin: 0; flex: 1; }
+  main { max-width: 760px; margin: 0 auto; padding: 28px 16px 80px; display: flex; flex-direction: column; gap: 28px; }
+  section h2 { font-family: var(--display); font-size: 21px; margin: 0 0 4px; }
+  section > p { margin: 0 0 14px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+  .welcome { background: color-mix(in srgb, var(--accent) 12%, var(--surface)); border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
+  .order { display: grid; gap: 10px; }
+  .order label { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; cursor: pointer; }
+  .order label:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .order input { accent-color: var(--accent); margin-top: 5px; }
+  .order small { display: block; color: var(--ink-2); }
+  .usage { font-size: 13.5px; margin-top: 12px; }
+  .keys { display: flex; flex-direction: column; gap: 10px; }
+  .key { display: flex; gap: 14px; align-items: center; }
+  .key .logo { width: 42px; height: 42px; border-radius: 10px; display: grid; place-items: center; font-weight: 700; flex: none; color: #fff; }
+  .logo.anthropic { background: #C96442; } .logo.openai { background: #10A37F; } .logo.openrouter { background: #6467F2; }
+  .key .info { flex: 1; min-width: 0; }
+  .key .info strong { display: block; }
+  .key .info span { font-size: 13px; color: var(--ink-2); }
+  .chip { font-size: 12px; padding: 2px 10px; border-radius: 999px; white-space: nowrap; }
+  .chip.ok { background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok); }
+  .chip.no_credit { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+  .chip.invalid { background: color-mix(in srgb, var(--bad) 15%, transparent); color: var(--bad); }
+  .empty-keys { color: var(--ink-2); text-align: center; padding: 18px; border: 1px dashed var(--line); border-radius: 12px; }
+  .providers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .providers button { border: 1px solid var(--line); background: var(--bg); border-radius: 12px; padding: 12px 8px; cursor: pointer;
+                      display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 14px; }
+  .providers button.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .providers .logo { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; color: #fff; font-weight: 700; }
+  form { display: flex; flex-direction: column; gap: 14px; }
+  .field { display: flex; flex-direction: column; gap: 5px; font-size: 14px; font-weight: 500; }
+  .field input { border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 10px 12px; font-weight: 400; }
+  details summary { cursor: pointer; font-size: 14px; color: var(--ink-2); }
+  details .field { margin-top: 10px; }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .result { font-size: 14px; margin: 0; }
+  .result.ok { color: var(--ok); } .result.bad { color: var(--bad); }
+  .hint { font-size: 12.5px; color: var(--ink-2); font-weight: 400; }
+  @media (max-width: 520px) { .providers { grid-template-columns: 1fr; } .providers button { flex-direction: row; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="btn icon ghost" href="/" aria-label="المكتبة"><svg class="i" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></a>
+  <h1>مفاتيح API</h1>
+</header>
+<main>
+  <div class="card welcome" id="welcome" hidden>
+    <strong>أهلاً بك 👋</strong>
+    <p class="muted" style="margin:6px 0 0">تقدر تبدأ الترجمة على المفتاح المشترك مباشرة. وإذا انتهى رصيده، الموقع يكمل تلقائياً على مفتاحك الخاص إذا أضفته هنا.</p>
+  </div>
+
+  <section>
+    <h2>ترتيب استخدام المفاتيح</h2>
+    <p class="muted">لو انتهى رصيد مفتاح أثناء ترجمة كتاب، ينتقل الموقع للمفتاح التالي ويكمل من نفس المكان.</p>
+    <div class="card order" id="order">
+      <label><input type="radio" name="order" value="shared_first"><span>المشترك أولاً، ثم مفاتيحي<small>يستهلك من رصيدك فقط إذا انتهى المفتاح المشترك.</small></span></label>
+      <label><input type="radio" name="order" value="mine_first"><span>مفاتيحي أولاً، ثم المشترك<small>مفيد لو تبي موديل معيّن من مزودك.</small></span></label>
+      <label><input type="radio" name="order" value="mine_only"><span>مفاتيحي فقط<small>لا يستخدم المفتاح المشترك أبداً.</small></span></label>
+      <div class="usage muted" id="usage"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>مفاتيحي</h2>
+    <p class="muted">تُحفظ مشفّرة، ولا يظهر منها إلا آخر 4 أحرف. الترتيب هنا هو ترتيب الاستخدام.</p>
+    <div class="keys" id="keys"></div>
+  </section>
+
+  <section>
+    <h2>إضافة مفتاح</h2>
+    <div class="card">
+      <form id="form">
+        <div class="providers" id="providers"></div>
+        <label class="field">المفتاح
+          <input id="key" type="password" autocomplete="off" dir="ltr" required placeholder="sk-...">
+          <span class="hint" id="keyHint"></span>
+        </label>
+        <label class="field">اسم يميّزه (اختياري)<input id="label" placeholder="مثلاً: حسابي الشخصي"></label>
+        <details>
+          <summary>اختيار الموديل (متقدم)</summary>
+          <label class="field">الموديل الأساسي (الترجمة والتدقيق والتحرير)<input id="model_main" dir="ltr"></label>
+          <label class="field">الموديل السريع (تحديد نوع الكتاب)<input id="model_fast" dir="ltr"></label>
+        </details>
+        <p class="result" id="result" hidden></p>
+        <div class="actions">
+          <button type="button" class="btn" id="testBtn">اختبار المفتاح</button>
+          <button type="submit" class="btn primary" id="saveBtn">حفظ المفتاح</button>
+        </div>
+      </form>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (t) => (t ?? "").toString().replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const LOGO = { anthropic: "A", openai: "O", openrouter: "R" };
+const HINT = { anthropic: "من console.anthropic.com ← API Keys. يبدأ بـ sk-ant-",
+               openai: "من platform.openai.com ← API keys. يبدأ بـ sk-",
+               openrouter: "من openrouter.ai ← Keys. يبدأ بـ sk-or-. مفتاح واحد يفتح موديلات كثيرة" };
+const STATUS = { ok: "يعمل", no_credit: "الرصيد منتهي", invalid: "مرفوض" };
+let provider = "anthropic", providers = [];
+function toast(m) { const t = $("#toast"); t.textContent = m; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 2600); }
+async function api(url, opts = {}) {
+  const r = await fetch(url, opts);
+  if (r.status === 401) { location.href = "/login"; throw new Error(); }
+  const j = await r.json(); if (!r.ok) throw new Error(j.detail || "حدث خطأ"); return j;
+}
+const send = (method, body) => ({ method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+
+function renderProviders() {
+  $("#providers").innerHTML = providers.map((p) => `<button type="button" class="${p.key === provider ? "on" : ""}" data-p="${p.key}">
+    <span class="logo ${p.key}" style="background:${{ anthropic: "#C96442", openai: "#10A37F", openrouter: "#6467F2" }[p.key]}">${LOGO[p.key]}</span>${esc(p.label)}</button>`).join("");
+  const p = providers.find((x) => x.key === provider);
+  $("#keyHint").textContent = HINT[provider];
+  $("#model_main").placeholder = p.main; $("#model_fast").placeholder = p.fast;
+}
+$("#providers").onclick = (e) => { const b = e.target.closest("[data-p]"); if (b) { provider = b.dataset.p; renderProviders(); $("#result").hidden = true; } };
+
+async function loadKeys() {
+  const j = await api("/api/keys");
+  providers = j.providers; renderProviders();
+  $("#keys").innerHTML = j.keys.length ? j.keys.map((k) => `<div class="card key">
+      <span class="logo ${k.provider}">${LOGO[k.provider]}</span>
+      <div class="info"><strong>${esc(k.label || k.provider_label)} <span dir="ltr">••${esc(k.last4)}</span></strong>
+        <span>${esc(k.model_main || k.default_main)}${k.tokens_used ? ` · ${k.tokens_used.toLocaleString("ar")} توكن مستخدم` : ""}</span>
+        ${k.status !== "ok" && k.status_note ? `<span style="display:block">${esc(k.status_note.slice(0, 120))}</span>` : ""}</div>
+      <span class="chip ${k.status}">${STATUS[k.status]}</span>
+      ${k.status !== "ok" ? `<button class="btn" onclick="resetKey(${k.id})" title="بعد ما تشحن الرصيد">إعادة التفعيل</button>` : ""}
+      <button class="btn icon ghost" aria-label="حذف" onclick="delKey(${k.id})"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+    </div>`).join("") : `<div class="empty-keys">ما أضفت أي مفتاح بعد.</div>`;
+}
+async function loadMe() {
+  const { user } = await api("/api/auth/me");
+  document.querySelector(`input[value="${user.key_order}"]`).checked = true;
+  const shared = user.shared_available
+    ? `استهلاكك من المفتاح المشترك: ${user.shared_tokens.toLocaleString("ar")} توكن${user.shared_limit ? ` من أصل ${user.shared_limit.toLocaleString("ar")}` : ""}.`
+    : "لا يوجد مفتاح مشترك مفعّل على هذا الموقع، فالترجمة تعتمد على مفاتيحك.";
+  $("#usage").textContent = shared;
+}
+$("#order").onchange = async (e) => { await api("/api/me", send("PUT", { key_order: e.target.value })); toast("تم حفظ الترتيب"); };
+
+async function resetKey(id) { const j = await api(`/api/keys/${id}`, send("PATCH", { reset_status: true })); toast(j.resumed_books ? `أُعيد التفعيل واستُؤنف ${j.resumed_books} كتاب` : "أُعيد التفعيل"); loadKeys(); }
+async function delKey(id) { if (!confirm("حذف هذا المفتاح نهائياً؟")) return; await api(`/api/keys/${id}`, { method: "DELETE" }); loadKeys(); }
+
+function showResult(ok, msg) { const r = $("#result"); r.hidden = false; r.className = `result ${ok ? "ok" : "bad"}`; r.textContent = msg; }
+$("#testBtn").onclick = async () => {
+  if (!$("#key").value.trim()) return showResult(false, "الصق المفتاح أولاً");
+  $("#testBtn").disabled = true; showResult(true, "جاري الاختبار…");
+  try { const j = await api("/api/keys/test", send("POST", { provider, key: $("#key").value, model: $("#model_main").value })); showResult(j.ok, j.message); }
+  catch (e) { showResult(false, e.message); } finally { $("#testBtn").disabled = false; }
+};
+$("#form").onsubmit = async (e) => {
+  e.preventDefault(); $("#saveBtn").disabled = true;
+  try {
+    const j = await api("/api/keys", send("POST", { provider, key: $("#key").value, label: $("#label").value,
+      model_main: $("#model_main").value, model_fast: $("#model_fast").value }));
+    e.target.reset(); $("#result").hidden = true;
+    toast(j.resumed_books ? `تم الحفظ — استُؤنف ${j.resumed_books} كتاب متوقف بمفتاحك` : "تم حفظ المفتاح");
+    loadKeys();
+  } catch (err) { showResult(false, err.message); } finally { $("#saveBtn").disabled = false; }
+};
+$("#welcome").hidden = !new URLSearchParams(location.search).has("welcome");
+loadKeys(); loadMe();
+</script>
+</body>
+</html>
