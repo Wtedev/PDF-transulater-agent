@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>مكتبتي المترجمة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/static/common.css">
+<link rel="stylesheet" href="/static/library.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <span class="logo" aria-hidden="true">س</span>
+    <div><h1>مكتبتي المترجمة</h1><p class="muted" id="count">—</p></div>
+  </div>
+  <button class="btn primary" id="openUpload">
+    <svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>ترجمة كتاب جديد
+  </button>
+</header>
+
+<main>
+  <div class="mock-banner" id="mockBanner" hidden>وضع الاختبار مفعّل: الترجمة تجريبية بدون استدعاء الذكاء الاصطناعي. أضف ANTHROPIC_API_KEY للتشغيل الفعلي.</div>
+
+  <section id="continueSection" hidden>
+    <h2 class="section-title">أكمل القراءة</h2>
+    <div class="continue-row" id="continueRow"></div>
+  </section>
+
+  <section>
+    <div class="toolbar">
+      <h2 class="section-title">كل الكتب</h2>
+      <div class="search">
+        <svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="search" type="search" placeholder="ابحث بالعنوان أو المؤلف">
+      </div>
+      <select id="sort" aria-label="الترتيب">
+        <option value="recent">الأحدث إضافة</option>
+        <option value="read">آخر قراءة</option>
+        <option value="title">الاسم</option>
+      </select>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="empty" hidden>
+      <div class="empty-book" aria-hidden="true"></div>
+      <h3>المكتبة فارغة</h3>
+      <p class="muted">ارفع أول كتاب، وسيمر على وكلاء الترجمة والتدقيق والتحرير ثم يظهر هنا جاهزاً للقراءة.</p>
+      <button class="btn primary" onclick="openUpload()">ترجمة كتاب جديد</button>
+    </div>
+  </section>
+</main>
+
+<dialog id="uploadDialog">
+  <form id="uploadForm" method="dialog">
+    <div class="dlg-head">
+      <h2>ترجمة كتاب جديد</h2>
+      <button type="button" class="btn icon ghost" onclick="uploadDialog.close()" aria-label="إغلاق">
+        <svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+
+    <label class="drop" id="drop">
+      <input type="file" name="file" id="fileInput" required
+             accept=".pdf,.epub,.docx,.txt,.md,.zip,.png,.jpg,.jpeg,.webp,.heic,.tif,.tiff">
+      <svg class="i big" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+      <strong id="dropTitle">اسحب الملف هنا أو اختره</strong>
+      <span class="muted small">PDF نصي أو مصوّر، EPUB، Word، نص، صورة صفحة، أو ZIP فيه صور الصفحات</span>
+    </label>
+
+    <div class="field">
+      <label for="title">اسم الكتاب <span class="req">*</span></label>
+      <input id="title" name="title" required placeholder="بهذا الاسم سيُحفظ في المكتبة وفي ملف PDF">
+    </div>
+    <div class="field">
+      <label for="author">المؤلف</label>
+      <input id="author" name="author" placeholder="اختياري، يكتشفه النظام إن وُجد">
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label for="category">نوع المحتوى</label>
+        <select id="category" name="category"><option value="auto">تحديد تلقائي</option></select>
+      </div>
+      <div class="field">
+        <label for="source_lang">لغة الكتاب</label>
+        <select id="source_lang" name="source_lang">
+          <option value="auto">تحديد تلقائي</option><option value="en">الإنجليزية</option>
+          <option value="fr">الفرنسية</option><option value="de">الألمانية</option><option value="es">الإسبانية</option>
+          <option value="tr">التركية</option><option value="ru">الروسية</option><option value="zh">الصينية</option>
+          <option value="ja">اليابانية</option><option value="ur">الأردية</option><option value="fa">الفارسية</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label for="cover">غلاف (اختياري)</label>
+      <input id="cover" name="cover" type="file" accept="image/*">
+      <span class="muted small">بدونه يُصمَّم غلاف موحد تلقائياً بنفس هوية المكتبة.</span>
+    </div>
+    <label class="check">
+      <input type="checkbox" name="rights" required>
+      <span>أؤكد أني أملك حق ترجمة هذا الكتاب، أو أنه ملكية عامة، أو للاستخدام الشخصي فقط.</span>
+    </label>
+    <p class="form-error" id="formError" hidden></p>
+    <div class="dlg-actions">
+      <button type="button" class="btn" onclick="uploadDialog.close()">إلغاء</button>
+      <button type="submit" class="btn primary" id="submitBtn">ابدأ الترجمة</button>
+    </div>
+    <div class="upload-progress" id="uploadProgress" hidden><span></span></div>
+  </form>
+</dialog>
+
+<dialog id="detailsDialog"><div id="detailsBody"></div></dialog>
+<div class="toast" id="toast"></div>
+<script src="/static/library.js"></script>
+</body>
+</html>

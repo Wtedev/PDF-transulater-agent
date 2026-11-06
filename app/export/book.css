@@ -1,0 +1,51 @@
+@page {
+  size: 148mm 210mm;               /* A5 — a book, not a report */
+  margin: 20mm 17mm 22mm 17mm;
+  @top-center { content: string(chapter); font-family: 'Naskh'; font-size: 8pt; color: #8a8174; }
+  @bottom-center { content: counter(page, arabic-indic); font-family: 'Naskh'; font-size: 9pt; color: #6d655a; }
+}
+@page cover { margin: 0; @top-center { content: none; } @bottom-center { content: none; } }
+@page front { @top-center { content: none; } @bottom-center { content: none; } }
+@page chapter-start { @top-center { content: none; } }
+
+html { direction: rtl; }
+body { font-family: 'Naskh', 'Amiri', 'DejaVu Sans', serif; font-size: 11pt; line-height: 1.9;
+       color: #221e1a; text-align: justify; }
+.running-title { display: none; }
+
+/* cover */
+.cover { page: cover; width: 148mm; height: 210mm; position: relative; page-break-after: always; }
+.cover-frame { position: absolute; top: 12mm; right: 12mm; width: 124mm; height: 186mm; box-sizing: border-box;
+               border: 1.2pt solid; padding: 48mm 12mm 0; text-align: center; }
+.cover-cat { font-size: 10pt; letter-spacing: 1pt; margin-bottom: 14mm; }
+.cover-title { font-family: 'Amiri'; font-weight: 700; font-size: 30pt; line-height: 1.35; margin: 0; }
+.cover-orn { font-family: "DejaVu Sans"; font-size: 11pt; margin: 9mm 0; }
+.cover-author { font-family: 'Amiri'; font-size: 15pt; }
+.image-cover img { width: 148mm; height: 210mm; object-fit: cover; }
+
+/* title page + contents */
+.title-page { page: front; text-align: center; padding-top: 45mm; page-break-after: always; }
+.title-page h1 { font-family: 'Amiri'; font-size: 24pt; margin: 0 0 6mm; }
+.tp-author { font-size: 13pt; color: #5c544a; margin-bottom: 40mm; }
+.tp-note { font-size: 8.5pt; color: #8a8174; line-height: 1.8; }
+.toc { page: front; page-break-after: always; }
+.toc h1 { font-family: 'Amiri'; font-size: 20pt; text-align: center; margin-bottom: 10mm; }
+.toc ol { list-style: none; padding: 0; margin: 0; }
+.toc li { margin: 0 0 3mm; font-size: 11pt; }
+.toc a { color: inherit; text-decoration: none; }
+.toc a::after { content: leader('.') target-counter(attr(href), page, arabic-indic); color: #8a8174; }
+
+/* chapters */
+.chapter { page-break-before: always; }
+.chapter-title { page: chapter-start; string-set: chapter content(); font-family: 'Amiri'; font-weight: 700;
+                 font-size: 20pt; text-align: center; margin: 18mm 0 10mm; padding-bottom: 4mm;
+                 border-bottom: 1pt solid; line-height: 1.5; }
+h2 { font-family: 'Amiri'; font-size: 14.5pt; margin: 7mm 0 2mm; page-break-after: avoid; }
+h3 { font-size: 12pt; margin: 5mm 0 1.5mm; page-break-after: avoid; }
+p { margin: 0 0 2.2mm; text-indent: 5mm; orphans: 2; widows: 2; }
+h2 + p, h3 + p, .chapter-title + p { text-indent: 0; }
+p.li { text-indent: 0; padding-right: 5mm; }
+p.li::before { content: "• "; }
+blockquote { margin: 3mm 4mm; padding: 1mm 4mm 1mm 0; border-right: 2pt solid; color: #4a433b; font-style: normal; }
+pre { direction: ltr; text-align: left; font-family: 'DejaVu Sans Mono', monospace; font-size: 8.5pt;
+      line-height: 1.5; background: #f4efe6; padding: 3mm; white-space: pre-wrap; page-break-inside: avoid; }

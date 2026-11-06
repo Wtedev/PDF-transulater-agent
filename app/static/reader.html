@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>القارئ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;600&family=Tajawal:wght@400;500&family=Noto+Kufi+Arabic:wght@400;500&display=swap">
+<link rel="stylesheet" href="/static/common.css">
+<link rel="stylesheet" href="/static/reader.css">
+</head>
+<body class="reader">
+<header class="rbar" id="rbar">
+  <a class="btn icon ghost" href="/" aria-label="المكتبة"><svg class="i" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></a>
+  <div class="rtitle"><strong id="bookTitle">…</strong><span class="muted" id="chapterName"></span></div>
+  <button class="btn icon ghost" data-panel="toc" aria-label="الفهرس"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></button>
+  <button class="btn icon ghost" data-panel="marks" aria-label="العلامات"><svg class="i" viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z"/></svg></button>
+  <button class="btn icon ghost" data-panel="settings" aria-label="إعدادات العرض"><span class="aa">Aa</span></button>
+  <a class="btn icon ghost" id="pdfLink" aria-label="تحميل PDF" hidden><svg class="i" viewBox="0 0 24 24"><path d="M12 4v12M7 11l5 5 5-5M5 20h14"/></svg></a>
+</header>
+
+<main id="page"><article id="book" class="book-body"></article></main>
+
+<footer class="rfoot" id="rfoot">
+  <div class="fbar"><span id="fprog"></span></div>
+  <div class="frow"><span id="fchap"></span><span id="fpct">0%</span></div>
+</footer>
+
+<aside class="panel" id="panel-toc" hidden>
+  <div class="phead"><h2>الفهرس</h2><button class="btn icon ghost close" aria-label="إغلاق"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <ol id="tocList" class="toc"></ol>
+</aside>
+
+<aside class="panel" id="panel-marks" hidden>
+  <div class="phead"><h2>العلامات</h2><button class="btn icon ghost close" aria-label="إغلاق"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <button class="btn primary" id="markHere" style="margin:0 18px 12px">ضع علامة على موضعي الحالي</button>
+  <ul id="marksList" class="marks"></ul>
+</aside>
+
+<aside class="panel" id="panel-settings" hidden>
+  <div class="phead"><h2>إعدادات العرض</h2><button class="btn icon ghost close" aria-label="إغلاق"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="settings">
+    <div class="srow"><label>حجم الخط</label>
+      <div class="stepper"><button data-step="size" data-d="-1" aria-label="تصغير">ا-</button><output id="sizeOut">20</output><button data-step="size" data-d="1" aria-label="تكبير">ا+</button></div></div>
+    <div class="srow col"><label>نوع الخط</label><div class="opts" id="fontOpts"></div></div>
+    <div class="srow col"><label>المظهر</label><div class="opts themes" id="themeOpts"></div></div>
+    <div class="srow"><label>تباعد الأسطر</label><input type="range" id="lh" min="1.5" max="2.6" step="0.1"></div>
+    <div class="srow"><label>عرض العمود</label><input type="range" id="width" min="28" max="52" step="2"></div>
+    <div class="srow"><label>محاذاة النص</label>
+      <div class="opts small" id="alignOpts"><button data-v="justify">ضبط</button><button data-v="right">يمين</button></div></div>
+    <div class="srow col"><label>النص الأصلي</label>
+      <div class="opts small" id="origOpts"><button data-v="tap">عند النقر</button><button data-v="side">جنباً إلى جنب</button><button data-v="off">إخفاء</button></div></div>
+    <div class="srow"><label for="showFlags">إظهار الفقرات التي تحتاج مراجعة</label><input type="checkbox" id="showFlags"></div>
+    <label class="check-row"><input type="checkbox" id="perBook"> حفظ هذه الإعدادات لهذا الكتاب فقط</label>
+    <button class="btn" id="resetSettings">استعادة الافتراضي</button>
+  </div>
+</aside>
+
+<div class="pop" id="pop" hidden>
+  <button data-act="mark">🔖 علامة</button>
+  <button data-act="orig">🌐 الأصل</button>
+  <button data-act="copy">📋 نسخ</button>
+</div>
+<div class="scrim" id="scrim" hidden></div>
+<div class="toast" id="toast"></div>
+<script src="/static/reader.js"></script>
+</body>
+</html>
