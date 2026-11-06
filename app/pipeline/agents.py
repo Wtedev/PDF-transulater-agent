@@ -32,14 +32,15 @@ def _context_block(glossary: dict, profile_key: str, src_lang: str) -> str:
 
 GLOSSARY_INSTRUCTIONS = """You are the terminology and context agent of a professional book translation team (target: Arabic).
 Read the sample of the book and produce what every other translator must follow. Return JSON only:
-{"summary": "5-8 sentence summary of the book in Arabic",
+{"title_ar": "the book title rendered in Arabic (short, natural; use the established Arabic title if one exists)",
+ "summary": "5-8 sentence summary of the book in Arabic",
  "style": "style guide in Arabic: register, tone, how to handle dialogue, quotes, numbers, foreign terms",
  "terms": [{"source":"term/name as in the book","target":"fixed Arabic rendering","note":"optional"}]}
 Include every recurring person/place name, invented term, and domain term (up to 150). Arabic renderings
 of names must be phonetic and consistent."""
 
 
-def build_glossary(blocks: list[dict], profile_key: str, src_lang: str) -> dict:
+def build_glossary(blocks: list[dict], profile_key: str, src_lang: str, title: str = "") -> dict:
     texts = [b["text"] for b in blocks if b["kind"] != "code"]
     # spread the sample across the whole book, chapter openings first
     heads = [i for i, b in enumerate(blocks) if b["kind"] == "h1"]
@@ -52,12 +53,12 @@ def build_glossary(blocks: list[dict], profile_key: str, src_lang: str) -> dict:
     sample = "\n".join(picked)[:budget]
 
     def mock():
-        return {"summary": "ملخص تجريبي للكتاب (وضع الاختبار).",
+        return {"title_ar": "", "summary": "ملخص تجريبي للكتاب (وضع الاختبار).",
                 "style": "عربية فصحى معاصرة واضحة.", "terms": []}
 
     result = llm.call_json(agent="glossary", model=config.MODEL_GLOSSARY,
                            instructions=GLOSSARY_INSTRUCTIONS,
-                           user=f"Content type: {PROFILES[profile_key]['label']}. Source language: {lang_name(src_lang)}.\n\nBOOK SAMPLE:\n{sample}",
+                           user=f"Book title: {title}\nContent type: {PROFILES[profile_key]['label']}. Source language: {lang_name(src_lang)}.\n\nBOOK SAMPLE:\n{sample}",
                            mock=mock, max_tokens=12000)
     result.setdefault("terms", [])
     return result

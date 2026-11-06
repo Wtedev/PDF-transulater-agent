@@ -203,7 +203,7 @@ def process_book(book_id: int):
                 if blocks is None:
                     blocks = [{"kind": p.kind, "text": p.src}
                               for c in book.chapters for p in c.paragraphs]
-                book.glossary = agents.build_glossary(blocks, book.category, book.source_lang)
+                book.glossary = agents.build_glossary(blocks, book.category, book.source_lang, book.title)
                 s.commit()
             ctx = agents.context_for(book.glossary, book.category, book.source_lang)
             chapter_ids = [c.id for c in book.chapters]

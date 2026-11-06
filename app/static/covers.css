@@ -1,0 +1,54 @@
+/* Book cover system — shared by the library page and the PDF export.
+   Every size is a multiple of --u (1% of the cover width) so the cover scales
+   from a 60px thumbnail to a 148mm printed page with identical proportions. */
+.bc { --u: 1cqw; container-type: inline-size; position: relative; aspect-ratio: 2 / 3; overflow: hidden;
+      background: var(--ground); color: var(--ink); direction: rtl; font-family: 'IBM Plex Sans Arabic', sans-serif; }
+.bc * { box-sizing: border-box; }
+.bc .hero-ar { font-family: 'Aref Ruqaa', 'Amiri', serif; font-weight: 700; }
+.bc .hero-lat { font-family: 'IBM Plex Sans Arabic', sans-serif; font-weight: 700; letter-spacing: -.02em; }
+.bc-center { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
+             text-align: center; padding: 0 calc(9 * var(--u)); }
+.bc-hero { font-size: calc(var(--hs) * var(--u)); line-height: 1.25; overflow-wrap: anywhere; }
+.bc-latin { font-family: 'IBM Plex Sans Arabic', sans-serif; font-weight: 400; text-transform: uppercase;
+            font-size: calc(var(--ls) * var(--u)); letter-spacing: .14em; line-height: 1.35; opacity: .92; }
+.bc-corner { position: absolute; font-size: calc(2.7 * var(--u)); line-height: 1.45; opacity: .78; max-width: 46%; }
+.bc-corner.tl { top: calc(7 * var(--u)); left: calc(7 * var(--u)); text-align: left; }
+.bc-corner.tr { top: calc(7 * var(--u)); right: calc(7 * var(--u)); text-align: right; }
+.bc-corner.bl { bottom: calc(7 * var(--u)); left: calc(7 * var(--u)); text-align: left; }
+.bc-corner.br { bottom: calc(7 * var(--u)); right: calc(7 * var(--u)); text-align: right; }
+
+/* 1 — calligraphic: accent-coloured calligraphic hero, thin latin, corner meta */
+.bc-calligraphic .bc-hero { color: var(--accent); }
+.bc-calligraphic .bc-hero.hero-ar { line-height: 1.5; }
+.bc-calligraphic .bc-latin { margin-top: calc(3 * var(--u)); color: var(--ink); font-weight: 400; }
+.bc-calligraphic .bc-corner { color: var(--ink); }
+
+/* 2 — minimal: monochrome centred lockup */
+.bc-minimal .bc-lockup { color: var(--ink); }
+.bc-minimal .bc-titles { text-align: center; }
+.bc-minimal .bc-desc { display: block; text-align: center; margin-bottom: calc(4 * var(--u)); }
+.bc-minimal .bc-hero.hero-ar { font-family: 'Reem Kufi', 'IBM Plex Sans Arabic', sans-serif; font-weight: 600; line-height: 1.15; }
+.bc-minimal .bc-latin { font-weight: 700; text-transform: none; letter-spacing: -.01em; margin-top: calc(.8 * var(--u)); opacity: 1; }
+.bc-minimal .bc-desc { font-size: calc(2.3 * var(--u)); letter-spacing: .22em; line-height: 1.6; opacity: .6; }
+.bc-minimal .bc-foot { position: absolute; bottom: calc(8 * var(--u)); left: 0; right: 0; text-align: center;
+                       font-size: calc(2.4 * var(--u)); letter-spacing: .2em; text-transform: uppercase; opacity: .55; }
+
+/* 3 — bold: black ground, white calligraphy with offset shadow, mono labels, neon accents */
+.bc-bold .bc-corner { font-family: 'IBM Plex Mono', 'DejaVu Sans Mono', monospace; text-transform: uppercase;
+                      font-size: calc(2.5 * var(--u)); color: #8F8F8F; opacity: 1; }
+.bc-bold .bc-stage { position: relative; display: inline-block; }
+.bc-bold .bc-hero { color: var(--ink); text-shadow: calc(.7 * var(--u)) calc(.9 * var(--u)) 0 #3A3A3A; }
+.bc-bold .bc-hero.hero-ar { line-height: 1.45; }
+.bc-bold .bc-pill { position: absolute; left: -2%; bottom: -4%; white-space: nowrap; background: var(--accent); color: #0A0A0A;
+                    font-size: calc(2.6 * var(--u)); font-weight: 600; padding: calc(.8 * var(--u)) calc(2.6 * var(--u));
+                    border-radius: 999px; border: calc(.4 * var(--u)) solid #0A0A0A; transform: rotate(-6deg); }
+.bc-bold .bc-latin { font-family: 'IBM Plex Mono', 'DejaVu Sans Mono', monospace; color: #9A9A9A; margin-top: calc(7 * var(--u));
+                     font-size: calc(2.6 * var(--u)); letter-spacing: .08em; }
+.bc-bold .bc-tag { position: absolute; right: calc(7 * var(--u)); bottom: calc(15 * var(--u)); background: var(--accent);
+                   color: #0A0A0A; font-size: calc(2.4 * var(--u)); padding: calc(.3 * var(--u)) calc(1.6 * var(--u));
+                   transform: rotate(-8deg); font-weight: 600; }
+.bc-bold .bc-track { position: absolute; left: calc(7 * var(--u)); right: calc(7 * var(--u)); bottom: calc(11 * var(--u));
+                     height: calc(.25 * var(--u)); background: #2C2C2C; }
+.bc-bold .bc-mark { position: absolute; top: calc(-1.6 * var(--u)); width: calc(2 * var(--u)); height: calc(3.2 * var(--u));
+                    background: #E5484D; transform: translateX(-50%);
+                    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 75%, 0 100%); }

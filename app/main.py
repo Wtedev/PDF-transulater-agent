@@ -13,7 +13,7 @@ from sqlalchemy import func
 
 from . import config, worker
 from .db import Book, Bookmark, Chapter, Paragraph, ReadingState, SessionLocal, init_db
-from .export.covers import CREAM, cover_colors
+from .export.covers import STYLES, cover_html, cover_spec, get_cover_style, set_cover_style
 from .pipeline.profiles import PROFILES
 from .pipeline.router import FORMAT_LABELS
 
@@ -47,14 +47,16 @@ async def basic_auth(request: Request, call_next):
 
 
 def _book_json(b: Book, extra: dict | None = None) -> dict:
-    bg, accent = cover_colors(b.title)
+    spec = cover_spec(b)
+    percent = (extra or {}).get("read_percent")
     d = {"id": b.id, "title": b.title, "author": b.author, "category": b.category,
          "category_label": PROFILES.get(b.category, {}).get("label", ""),
          "format": b.file_format, "format_label": FORMAT_LABELS.get(b.file_format, ""),
          "source_lang": b.source_lang, "status": b.status, "stage": b.stage,
          "progress": b.progress, "error": b.error, "flagged": b.flagged_count,
          "has_pdf": bool(b.pdf_file), "has_cover": bool(b.cover_file),
-         "colors": {"bg": bg, "accent": accent, "text": CREAM},
+         "colors": {"bg": spec["ground"], "accent": spec["accent"], "text": spec["ink"]},
+         "cover_html": cover_html(spec, percent),
          "created_at": b.created_at.isoformat() if b.created_at else None,
          "updated_at": b.updated_at.isoformat() if b.updated_at else None}
     if extra:
@@ -70,7 +72,18 @@ def health():
 @app.get("/api/meta")
 def meta():
     return {"categories": [{"key": k, "label": v["label"]} for k, v in PROFILES.items()],
-            "mock": config.MOCK_LLM}
+            "mock": config.MOCK_LLM, "cover_style": get_cover_style(),
+            "cover_styles": [{"key": k, "label": v} for k, v in STYLES.items()]}
+
+
+@app.put("/api/settings")
+async def put_settings(request: Request):
+    data = await request.json()
+    style = data.get("cover_style")
+    if style not in STYLES:
+        raise HTTPException(400, "نمط غير معروف")
+    set_cover_style(style)
+    return {"cover_style": style}
 
 
 @app.get("/api/books")

@@ -9,9 +9,10 @@ from pathlib import Path
 
 from .. import config
 from ..pipeline.profiles import PROFILES
-from .covers import CREAM, cover_colors
+from .covers import cover_html, cover_spec
 
 TEMPLATE_CSS = (Path(__file__).parent / "book.css").read_text(encoding="utf-8")
+COVER_CSS = (config.BASE_DIR / "static" / "covers.css").read_text(encoding="utf-8")
 
 
 def safe_filename(title: str, author: str = "") -> str:
@@ -28,14 +29,18 @@ def _font_faces() -> str:
     faces = []
     for family, file, weight in (("Naskh", "NotoNaskhArabic.ttf", "400 700"),
                                  ("Amiri", "Amiri-Regular.ttf", "400"),
-                                 ("Amiri", "Amiri-Bold.ttf", "700")):
+                                 ("Amiri", "Amiri-Bold.ttf", "700"),
+                                 ("Aref Ruqaa", "ArefRuqaa-Bold.ttf", "700"),
+                                 ("Reem Kufi", "ReemKufi.ttf", "400 700"),
+                                 ("IBM Plex Sans Arabic", "IBMPlexSansArabic-Regular.ttf", "400"),
+                                 ("IBM Plex Sans Arabic", "IBMPlexSansArabic-Bold.ttf", "600 700")):
         path = (config.FONT_DIR / file).resolve()
         faces.append(f"@font-face{{font-family:'{family}';src:url('file://{path}');font-weight:{weight};}}")
     return "\n".join(faces)
 
 
 def build_html(book) -> str:
-    bg, accent = cover_colors(book.title)
+    accent = cover_spec(book)["accent"]
     title, author = _esc(book.title), _esc(book.author)
     category = PROFILES.get(book.category, PROFILES["general"])["label"]
 
@@ -43,13 +48,7 @@ def build_html(book) -> str:
         cover_path = (config.COVER_DIR / book.cover_file).resolve()
         cover = f'<section class="cover image-cover"><img src="file://{cover_path}"></section>'
     else:
-        cover = f"""<section class="cover" style="background:{bg};color:{CREAM}">
-          <div class="cover-frame" style="border-color:{accent}">
-            <div class="cover-cat" style="color:{accent}">{_esc(category)}</div>
-            <h1 class="cover-title">{title}</h1>
-            <div class="cover-orn" style="color:{accent}">⸻ ◆ ⸻</div>
-            <div class="cover-author">{author}</div>
-          </div></section>"""
+        cover = f'<section class="cover">{cover_html(cover_spec(book))}</section>'
 
     toc, body = [], []
     for ch in book.chapters:
@@ -82,7 +81,7 @@ def build_html(book) -> str:
     contents = f'<section class="toc"><h1>المحتويات</h1><ol>{"".join(toc)}</ol></section>' if len(toc) > 1 else ""
 
     return f"""<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
-      <title>{title}</title><style>{_font_faces()}\n{TEMPLATE_CSS}
+      <title>{title}</title><style>{_font_faces()}\n{TEMPLATE_CSS}\n{COVER_CSS}\n.cover .bc{{--u:1.48mm;width:148mm;height:210mm;aspect-ratio:auto;}}
       .chapter-title{{border-bottom-color:{accent}}} blockquote{{border-right-color:{accent}}}</style>
       </head><body><div class="running-title">{title}</div>{cover}{title_page}{contents}{''.join(body)}</body></html>"""
 

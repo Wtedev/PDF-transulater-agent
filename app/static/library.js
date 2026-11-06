@@ -16,19 +16,25 @@ async function api(url, opts = {}) {
 function coverHTML(b, href) {
   const tag = href ? `a href="${href}"` : "div";
   const end = href ? "a" : "div";
-  if (b.has_cover) return `<${tag} class="cover"><img src="/api/books/${b.id}/cover" alt="" loading="lazy"></${end}>`;
-  const c = b.colors;
-  return `<${tag} class="cover" style="background:${c.bg};color:${c.text}">
-    <span class="frame" style="border-color:${c.accent}">
-      <span class="c-cat" style="color:${c.accent}">${esc(b.category_label || "")}</span>
-      <span class="c-title">${esc(b.title)}</span>
-      <span class="c-rule" style="background:${c.accent}"></span>
-      <span class="c-author">${esc(b.author)}</span>
-    </span></${end}>`;
+  const inner = b.has_cover ? `<img src="/api/books/${b.id}/cover" alt="" loading="lazy">` : b.cover_html;
+  return `<${tag} class="cover" aria-label="${esc(b.title)}">${inner}</${end}>`;
+}
+
+let coverStyle = "calligraphic", coverStyles = [];
+function renderStyleSwitch() {
+  $("#styleSwitch").innerHTML = coverStyles.map((s) =>
+    `<button role="radio" aria-checked="${s.key === coverStyle}" class="${s.key === coverStyle ? "on" : ""}" onclick="setCoverStyle('${s.key}')">${esc(s.label)}</button>`).join("");
+}
+async function setCoverStyle(key) {
+  if (key === coverStyle) return;
+  coverStyle = key; renderStyleSwitch();
+  await api("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cover_style: key }) });
+  await load();
+  toast("تم تغيير نمط الأغلفة — الكتب الجديدة تُصدَّر بهذا النمط");
 }
 
 function badge(b) {
-  if (b.status === "ready") return `<span class="badge ready">جاهز</span>`;
+  if (b.status === "ready") return "";
   if (b.status === "needs_review") return `<span class="badge review" title="${b.flagged} فقرة منخفضة الثقة">يحتاج مراجعة</span>`;
   if (b.status === "failed") return `<span class="badge failed">فشل</span>`;
   return `<span class="badge">${STATUS[b.status] || b.status}</span>`;
@@ -179,6 +185,7 @@ $("#sort").onchange = render;
 (async () => {
   const meta = await api("/api/meta");
   categories = meta.categories;
+  coverStyle = meta.cover_style; coverStyles = meta.cover_styles; renderStyleSwitch();
   $("#mockBanner").hidden = !meta.mock;
   $("#category").insertAdjacentHTML("beforeend", categories.map((c) => `<option value="${c.key}">${esc(c.label)}</option>`).join(""));
   load();

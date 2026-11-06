@@ -17,7 +17,7 @@ main { padding: 24px clamp(16px, 4vw, 48px) 80px; max-width: 1400px; margin: 0 a
                  border-radius: var(--radius); padding: 12px; min-width: 300px; text-decoration: none; scroll-snap-align: start;
                  box-shadow: var(--shadow); }
 .continue-card .cover { width: 62px; flex: none; font-size: 9px; }
-.continue-card .cover .frame > * { display: none; }
+.continue-card .cover .bc > * { display: none; }
 .continue-card h3 { margin: 0 0 4px; font-size: 15px; }
 .bar { height: 5px; background: var(--surface-2); border-radius: 99px; overflow: hidden; margin-top: 8px; }
 .bar span { display: block; height: 100%; background: var(--accent); border-radius: 99px; transition: width .4s; }
@@ -36,8 +36,11 @@ main { padding: 24px clamp(16px, 4vw, 48px) 80px; max-width: 1400px; margin: 0 a
 /* grid + unified covers */
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 28px 22px; }
 .book { position: relative; display: flex; flex-direction: column; gap: 10px; }
-.cover { aspect-ratio: 2 / 3; border-radius: 4px 10px 10px 4px; position: relative; overflow: hidden; display: block;
-         box-shadow: var(--shadow), inset -6px 0 10px -6px rgba(0,0,0,.35); text-decoration: none; }
+.cover { aspect-ratio: 2 / 3; border-radius: 3px 8px 8px 3px; position: relative; overflow: hidden; display: block;
+         box-shadow: 0 1px 2px rgba(0,0,0,.18), 0 10px 26px rgba(30,20,8,.22); text-decoration: none; }
+.cover .bc { width: 100%; height: 100%; }
+.cover::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4%; z-index: 1; pointer-events: none;
+                 background: linear-gradient(90deg, rgba(255,255,255,.08), rgba(0,0,0,.25)); }
 .cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .cover .frame { position: absolute; inset: 8%; border: 1px solid; display: flex; flex-direction: column;
                 align-items: center; justify-content: center; text-align: center; padding: 10% 8%; gap: 8%; }
@@ -46,7 +49,8 @@ main { padding: 24px clamp(16px, 4vw, 48px) 80px; max-width: 1400px; margin: 0 a
            display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 .c-rule { width: 26%; height: 2px; }
 .c-author { font-family: var(--display); font-size: 13px; opacity: .9; }
-.book.busy .cover::after { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,.35); }
+.book.busy .cover::after { content: ""; position: absolute; inset: 55% 0 0 0; z-index: 1;
+                          background: linear-gradient(transparent, rgba(0,0,0,.85)); }
 .cover:hover { transform: translateY(-2px); transition: transform .15s; }
 
 .badge { position: absolute; top: 8px; left: 8px; z-index: 2; font-size: 11.5px; font-weight: 600; padding: 3px 9px;
@@ -54,7 +58,7 @@ main { padding: 24px clamp(16px, 4vw, 48px) 80px; max-width: 1400px; margin: 0 a
 .badge.ready { background: var(--ok); color: #fff; }
 .badge.review { background: var(--warn); color: #fff; }
 .badge.failed { background: var(--bad); color: #fff; }
-.busy-info { position: absolute; inset: auto 10px 12px 10px; z-index: 2; color: #fff; font-size: 12px; }
+.busy-info { position: absolute; inset: auto 10px 12px 10px; z-index: 3; color: #fff; font-size: 12px; }
 .busy-info .bar { background: rgba(255,255,255,.25); }
 .busy-info .bar span { background: #fff; }
 
@@ -115,3 +119,7 @@ svg.i.big { width: 30px; height: 30px; color: var(--accent); }
   .toolbar .section-title { width: 100%; }
   .search { flex: 1; }
 }
+
+.style-switch { display: flex; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+.style-switch button { border: 0; background: none; padding: 6px 14px; border-radius: 999px; cursor: pointer; font-size: 14px; }
+.style-switch button.on { background: var(--ink); color: var(--bg); }
