@@ -10,7 +10,7 @@ COVER_DIR = DATA_DIR / "covers"
 for _d in (UPLOAD_DIR, OUTPUT_DIR, COVER_DIR):
     _d.mkdir(parents=True, exist_ok=True)
 
-DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DATA_DIR / 'books.db'}")
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip() or f"sqlite:///{DATA_DIR / 'books.db'}"
 # Railway gives postgres:// URLs; SQLAlchemy wants postgresql://
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)

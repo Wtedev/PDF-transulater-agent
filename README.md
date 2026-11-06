@@ -51,7 +51,7 @@ ANTHROPIC_API_KEY=sk-ant-... uvicorn app.main:app
 
 1. أنشئ مشروعاً من هذا الريبو (يُبنى من `Dockerfile` تلقائياً).
 2. أضف **Volume** واربطه على المسار `/data` (هنا تُحفظ الملفات والـ PDF).
-3. أضف قاعدة **PostgreSQL** (يُقرأ `DATABASE_URL` تلقائياً). بدونها يستخدم SQLite داخل الـ Volume.
+3. أضف قاعدة **PostgreSQL**، ثم في متغيرات خدمة الموقع أضف `DATABASE_URL` = `${{Postgres.DATABASE_URL}}` (الربط ليس تلقائياً). بدونها يستخدم SQLite داخل الـ Volume.
 4. المتغيرات:
 
 | المتغير | الوصف |
